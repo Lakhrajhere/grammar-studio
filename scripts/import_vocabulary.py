@@ -21,7 +21,7 @@ from cloudflare_d1 import execute, query
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAX_BYTES = 10 * 1024 * 1024
+MAX_BYTES = 50 * 1024 * 1024
 WORD_FIELDS = ('word', 'correct_spelling', 'correct', 'spelling', 'headword')
 TYPO_FIELDS = ('misspellings', 'misspelling', 'incorrect', 'wrong', 'typo')
 
@@ -165,7 +165,7 @@ def load_source(*, file=None, url=None, input_format=None):
     if file is not None:
         path = Path(file).expanduser().resolve()
         if path.stat().st_size > MAX_BYTES:
-            raise ValueError('The input exceeds the 10 MiB limit.')
+            raise ValueError('The input exceeds the 50 MiB limit.')
         content, locator, source_type = path.read_bytes(), path.name, 'file'
         detected = path.suffix.lstrip('.').lower()
     else:
@@ -175,14 +175,14 @@ def load_source(*, file=None, url=None, input_format=None):
         request = urllib.request.Request(url, headers={'User-Agent': 'GrammarVocabularyImporter/1.0'})
         with urllib.request.urlopen(request, timeout=30) as response:
             if int(response.headers.get('Content-Length', '0')) > MAX_BYTES:
-                raise ValueError('The linked input exceeds the 10 MiB limit.')
+                raise ValueError('The linked input exceeds the 50 MiB limit.')
             content = response.read(MAX_BYTES + 1)
             mime = response.headers.get_content_type()
             detected = Path(urllib.parse.urlsplit(response.geturl()).path).suffix.lstrip('.').lower()
             if not detected:
                 detected = {'application/json': 'json', 'text/csv': 'csv', 'text/plain': 'txt'}.get(mime, 'html')
         if len(content) > MAX_BYTES:
-            raise ValueError('The linked input exceeds the 10 MiB limit.')
+            raise ValueError('The linked input exceeds the 50 MiB limit.')
         locator, source_type = url, 'url'
     detected = {'htm': 'html', 'text': 'txt'}.get(detected, detected)
     return {'content': content, 'locator': locator, 'source_type': source_type,
